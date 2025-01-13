@@ -1,0 +1,119 @@
+import { useState } from 'react'
+import { Button } from "/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "/components/ui/card"
+import { Input } from "/components/ui/input"
+import { Label } from "/components/ui/label"
+
+export default function MissedCallROICalculator() {
+  const [missedCallsPerWeek, setMissedCallsPerWeek] = useState('')
+  const [averageCloseRate, setAverageCloseRate] = useState('')
+  const [averageClientValue, setAverageClientValue] = useState('')
+  const [weeklyLoss, setWeeklyLoss] = useState<number | null>(null)
+  const [roiPercentage, setRoiPercentage] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const fixedCharge = 99 // Our Charge
+
+  const calculateROI = () => {
+    const missedCalls = parseFloat(missedCallsPerWeek)
+    const closeRate = parseFloat(averageCloseRate)
+    const clientValue = parseFloat(averageClientValue)
+
+    if (isNaN(missedCalls) || isNaN(closeRate) || isNaN(clientValue)) {
+      setError('Please enter valid numbers for all fields.')
+      return
+    }
+
+    if (missedCalls <= 0 || closeRate <= 0 || clientValue <= 0) {
+      setError('All fields must be positive numbers.')
+      return
+    }
+
+    const weeklyLoss = missedCalls * (closeRate / 100) * clientValue
+    setWeeklyLoss(weeklyLoss)
+
+    if (weeklyLoss > fixedCharge / 4) { // Assuming 4 weeks in a month
+      const roi = ((weeklyLoss - (fixedCharge / 4)) / (fixedCharge / 4)) * 100
+      setRoiPercentage(roi)
+    } else {
+      setRoiPercentage(null)
+    }
+
+    setError(null)
+  }
+
+  const reset = () => {
+    setMissedCallsPerWeek('')
+    setAverageCloseRate('')
+    setAverageClientValue('')
+    setWeeklyLoss(null)
+    setRoiPercentage(null)
+    setError(null)
+  }
+
+  return (
+    <div>
+      <Card className="w-full max-w-2xl mx-auto mt-8 bg-white text-black">
+        <CardHeader className="flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mr-4" />
+            <CardTitle className="text-2xl">Missed Call ROI Calculator</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="missed-calls">Missed Calls Per Week</Label>
+            <Input
+              id="missed-calls"
+              type="number"
+              value={missedCallsPerWeek}
+              onChange={(e) => setMissedCallsPerWeek(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label htmlFor="close-rate">Average Close Rate (%)</Label>
+            <Input
+              id="close-rate"
+              type="number"
+              value={averageCloseRate}
+              onChange={(e) => setAverageCloseRate(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label htmlFor="client-value">Average Client Value (£)</Label>
+            <Input
+              id="client-value"
+              type="number"
+              value={averageClientValue}
+              onChange={(e) => setAverageClientValue(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+          {error && <p className="text-red-500 mt-2">{error}</p>}
+          <div className="flex justify-center flex-col items-center">
+            <Button
+              onClick={calculateROI}
+              className="bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:shadow-lg transition duration-150 ease-in-out"
+            >
+              Calculate ROI
+            </Button>
+            {weeklyLoss !== null && (
+              <p className="mt-2 text-gray-600">Results:</p>
+            )}
+          </div>
+          {weeklyLoss !== null && (
+            <div className="mt-4 p-4 rounded-lg bg-gray-100 text-center">
+              <p className="font-bold">Weekly £££ Left on Table: £{weeklyLoss.toFixed(2)}</p>
+              <p className="font-bold">We Charge £{fixedCharge.toFixed(2)} (per month)</p>
+              {roiPercentage !== null && (
+                <p className="font-bold">ROI: {roiPercentage.toFixed(2)}%</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
